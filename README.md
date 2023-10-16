@@ -35,11 +35,13 @@ Users can initiate a "deal," where one party ("Party") sets the terms, including
     bool dealCanceled;
 }
 
-
 #### State Variables
 
-mapping(uint256 => Deal) public deals; // Mapping from deal IDs to Deal structs.
-mapping(uint256 => mapping(address => mapping(address => uint256))) public allowedWithdrawals; // Tracks who is allowed to withdraw what amount of which token for each deal.
+- `mapping(uint256 => Deal) public deals;`  
+  - Mapping from deal IDs to Deal structs.
+  
+- `mapping(uint256 => mapping(address => mapping(address => uint256))) public allowedWithdrawals;`  
+  - Tracks who is allowed to withdraw what amount of which token for each deal.
 
 
 ### Functions
