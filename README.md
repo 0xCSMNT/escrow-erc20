@@ -1,9 +1,9 @@
 # ESCROW ERC20
-This dApp is a trustless escrow service for swapping ERC20 tokens between two parties. It comprises two smart contracts:
+This dApp is a trustless escrow service for swapping ERC20 tokens between two parties. 
 
-escrow.sol: Acts as a secure holding area for tokens deposited by both participants in a deal.
-
-verifier.sol: Manages the state and rules for each deal.
+It comprises two smart contracts:
+- escrow.sol: Acts as a secure holding area for tokens deposited by both participants in a deal.
+- verifier.sol: Manages the state and rules for each deal.
 
 Users can initiate a "deal," where one party ("Party") sets the terms, including the type and amount of tokens they wish to swap. The other participant ("Counterparty") can then agree to these terms and deposit their tokens into escrow. Before finalization, either party can opt to cancel the deal, which allows both to withdraw their initial deposits. Once both parties are satisfied, the deal can be verified, enabling each party to withdraw the tokens deposited by the other. The system is designed for reusability, allowing for multiple concurrent deals.
 
@@ -37,10 +37,10 @@ Users can initiate a "deal," where one party ("Party") sets the terms, including
 
 
 #### State Variables
-\`\`\`solidity
+
 mapping(uint256 => Deal) public deals; // Mapping from deal IDs to Deal structs.
 mapping(uint256 => mapping(address => mapping(address => uint256))) public allowedWithdrawals; // Tracks who is allowed to withdraw what amount of which token for each deal.
-\`\`\`
+
 
 ### Functions
 - `createDeal()`: Initializes a new deal.
@@ -102,7 +102,7 @@ mapping(uint256 => mapping(address => mapping(address => uint256))) public allow
 
 
 
-## Foundry
+# Foundry
 
 **Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
 
