@@ -1,12 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-// import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
-
 contract Verifier {
+    // modifiers
+    modifier onlyParty(uint dealId) {
+        require(
+            msg.sender == deals[dealId].party,
+            "Only the party can perform this action"
+        );
+        _;
+    }
 
-    // constructors
-    // constructor() Ownable(msg.sender) {}
+    modifier onlyCounterparty(uint dealId) {
+        require(
+            msg.sender == deals[dealId].counterparty,
+            "Only the counterparty can perform this action"
+        );
+        _;
+    }
 
     // events
     event DealCreated(
@@ -43,20 +54,47 @@ contract Verifier {
     // state variables
     Deal[] public deals;
 
-    mapping (address => uint[]) public partyToDeal; // maps party address to deal ids
-    mapping (address => uint[]) public counterpartyToDeal; // maps counterparty address to deal ids
+    mapping(address => uint[]) public partyToDeal; // maps party address to deal ids
+    mapping(address => uint[]) public counterpartyToDeal; // maps counterparty address to deal ids
 
-    function createDeal(address counterparty, address party_token, uint party_token_amount, address counterparty_token, uint counterparty_token_amount) public {
-        
+    function createDeal(
+        address counterparty,
+        address party_token,
+        uint party_token_amount,
+        address counterparty_token,
+        uint counterparty_token_amount
+    ) public {
         // create deal id and push to deals array
-        deals.push(Deal(msg.sender, counterparty, party_token, party_token_amount, counterparty_token, counterparty_token_amount, false, false, false, false, false));
+        deals.push(
+            Deal(
+                msg.sender,
+                counterparty,
+                party_token,
+                party_token_amount,
+                counterparty_token,
+                counterparty_token_amount,
+                false,
+                false,
+                false,
+                false,
+                false
+            )
+        );
         uint dealId = deals.length - 1;
-        
+
         // set Party and Counterparty ownership with mappings and deal id
         partyToDeal[msg.sender].push(dealId);
         counterpartyToDeal[counterparty].push(dealId);
-        
+
         // emit DealCreated event
-        emit DealCreated(dealId, msg.sender, counterparty, party_token, party_token_amount, counterparty_token, counterparty_token_amount);
+        emit DealCreated(
+            dealId,
+            msg.sender,
+            counterparty,
+            party_token,
+            party_token_amount,
+            counterparty_token,
+            counterparty_token_amount
+        );
     }
 }
