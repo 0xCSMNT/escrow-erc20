@@ -103,40 +103,41 @@ contract Verifier {
     }
 
     function fundDeal(uint dealId) public {
-        address funder = msg.sender;
+    // check deal is not verified, completed or canceled already and that msg.sender is party or counterparty
+    require(checkDealStatus(dealId), "Deal cannot be funded in its current state");
+    require(msg.sender == deals[dealId].party || msg.sender == deals[dealId].counterparty, 
+            "Only the party or counterparty can fund the deal");
+    
+    // process funding for Party
+    if (msg.sender == deals[dealId].party) {
+        require(!deals[dealId].party_funded, "Party has already funded the deal");
         
-        require(checkDealStatus(dealId), "Deal cannot be funded in its current state");
-        require(funder == deals[dealId].party || funder == deals[dealId].counterparty, 
-                "Only the party or counterparty can fund the deal");
+        // TODO: call deposit function on escrow.sol
         
-        Deal storage currentDeal = deals[dealId];
+        deals[dealId].party_funded = true;
         
-        if (funder == currentDeal.party) {
-            require(!currentDeal.party_funded, "Party has already funded the deal");
-            
-            // TODO: call deposit function on escrow.sol
-            currentDeal.party_funded = true;
-            
-            if (currentDeal.counterparty_funded) {
-                partyVerifiesAndExecutes(dealId);
-            } 
-            else {
-                emit PartyFunded(dealId, currentDeal.party);
-            }
-        } 
-        else if (funder == currentDeal.counterparty) {
-            require(!currentDeal.counterparty_funded, "Counterparty has already funded the deal");
-            
-            // TODO: call deposit function on escrow.sol
-            currentDeal.counterparty_funded = true;
-            
-            if (currentDeal.party_funded) {
-                counterpartyVerifiesAndExecutes(dealId);
-            } else {
-                emit CounteryPartyFunded(dealId, currentDeal.counterparty);
-            }
+        if (deals[dealId].counterparty_funded) {
+            partyVerifiesAndExecutes(dealId);
+        } else {
+            emit PartyFunded(dealId, deals[dealId].party);
+        }
+    } 
+    // process funding for Counterparty
+    else if (msg.sender == deals[dealId].counterparty) {
+        require(!deals[dealId].counterparty_funded, "Counterparty has already funded the deal");
+        
+        // TODO: call deposit function on escrow.sol
+        
+        deals[dealId].counterparty_funded = true;
+        
+        if (deals[dealId].party_funded) {
+            counterpartyVerifiesAndExecutes(dealId);
+        } else {
+            emit CounteryPartyFunded(dealId, deals[dealId].counterparty);
         }
     }
+}
+
 
 
     // checks that counterparty has funded the deal and updates the deal_verified state to true
