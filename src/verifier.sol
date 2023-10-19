@@ -114,7 +114,7 @@ contract Verifier {
         if (funder == currentDeal.party) {
             require(!currentDeal.party_funded, "Party has already funded the deal");
             
-            // Call deposit function on escrow.sol
+            // TODO: call deposit function on escrow.sol
             currentDeal.party_funded = true;
             
             if (currentDeal.counterparty_funded) {
@@ -127,7 +127,7 @@ contract Verifier {
         else if (funder == currentDeal.counterparty) {
             require(!currentDeal.counterparty_funded, "Counterparty has already funded the deal");
             
-            // Call deposit function on escrow.sol
+            // TODO: call deposit function on escrow.sol
             currentDeal.counterparty_funded = true;
             
             if (currentDeal.party_funded) {
@@ -136,7 +136,7 @@ contract Verifier {
                 emit CounteryPartyFunded(dealId, currentDeal.counterparty);
             }
         }
-}
+    }
 
 
     // checks that counterparty has funded the deal and updates the deal_verified state to true
