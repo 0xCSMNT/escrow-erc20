@@ -76,10 +76,10 @@ Users can initiate a "deal," where one party ("Party") sets the terms, including
   - [ ] Implement `deposit()` function for both Party and Counterparty.
   - [ ] Implement `withdraw()` function.
 - [ ] Write `verifier.sol`
-  - [ ] Define `Deal` struct.
-  - [ ] Implement `createDeal()` function.
-  - [ ] Implement `fundDeal()` function for Party and Counterparty.
-  - [ ] Implement `verify_deal()` function.
+  - [x] Define `Deal` struct.
+  - [x] Implement `createDeal()` function.
+  - [x] Implement `fundDeal()` function for Party and Counterparty.
+  - [x] Implement `verify_deal()` function.
   - [ ] Implement `cancel_deal()` function.
 - [ ] Add events for important state changes.
 - [ ] Implement reusability features.
