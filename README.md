@@ -75,15 +75,13 @@ Users can initiate a "deal," where one party ("Party") sets the terms, including
 - [ ] Write `escrow.sol`
   - [ ] Implement `deposit()` function for both Party and Counterparty.
   - [ ] Implement `withdraw()` function.
-- [ ] Write `verifier.sol`
+- [x] Write `verifier.sol`
   - [x] Define `Deal` struct.
   - [x] Implement `createDeal()` function.
   - [x] Implement `fundDeal()` function for Party and Counterparty.
   - [x] Implement `verify_deal()` function.
-  - [ ] Implement `cancel_deal()` function.
-- [ ] Add events for important state changes.
-- [ ] Implement reusability features.
-- [ ] Write initial tests for smart contracts.
+  - [x] Implement `cancel_deal()` function.
+- [x] Add events for important state changes.
 
 ## Phase 2: Front-End
 - [ ] Set up a basic front-end using Web3.js.
