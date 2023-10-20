@@ -51,9 +51,9 @@ contract Verifier {
         uint counterparty_token_amount;
         bool party_funded;
         bool counterparty_funded;
-        bool deal_verified;
+        bool deal_verified; // I think this is redundant
         bool deal_canceled;
-        bool deal_completed;
+        bool deal_completed; // Dont need both deal_verified and deal_completed
     }
 
     // state variables
@@ -183,11 +183,11 @@ contract Verifier {
     }
 
     function cancelDeal(uint dealId) public {
-        // requires (msg.sender == party & party_funded == true || msg.sender == counterparty && counterparty_funded == true)
-        // requires (deal_verified == false)
-        // requires (deal_completed == false)
-        // requires (deal_canceled == false)
-        // set deal_canceled to true
-        // emit event DealCanceled()
+        require (
+                (msg.sender == deals[dealId].party && deals[dealId].party_funded == true) ||
+                (msg.sender == deals[dealId].counterparty && deals[dealId].counterparty_funded) == true);
+        require(checkDealStatus(dealId), "Deal cannot be canceled in its current state");
+        deals[dealId].deal_canceled = true;
+        emit DealCanceled(dealId);
     }
 }
