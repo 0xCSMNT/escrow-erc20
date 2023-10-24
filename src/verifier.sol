@@ -1,9 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-// Testing changes
+import "./IEscrow.sol";
 
 contract Verifier {
+    // interface to escrow contract
+    IEscrow public escrow;
+
+    constructor(address _escrowAddress) {
+        escrow = IEscrow(_escrowAddress);
+    }
+    
+    
     // modifiers
     modifier onlyParty(uint dealId) {
         require(
@@ -103,39 +111,51 @@ contract Verifier {
             counterparty_token_amount
         );
     }
-
+    
     function fundDeal(uint dealId) public {
     // check deal is not verified, completed or canceled already and that msg.sender is party or counterparty
     require(checkDealStatus(dealId), "Deal cannot be funded in its current state");
     require(msg.sender == deals[dealId].party || msg.sender == deals[dealId].counterparty, 
             "Only the party or counterparty can fund the deal");
     
+    // state variables
+    address funder = msg.sender;
+    Deal storage deal = deals[dealId];
+    
     // process funding for Party
-    if (msg.sender == deals[dealId].party) {
-        require(!deals[dealId].party_funded, "Party has already funded the deal");
+    if (funder == deal.party) {
+        require(!deal.party_funded, "Party has already funded the deal");
         
-        // TODO: call deposit function on escrow.sol
+        //call deposit function on escrow.sol
+        escrow.deposit(dealId, funder, deal.party_token, deal.party_token_amount);
         
-        deals[dealId].party_funded = true;
+        // update deal.party_funded to true
+        deal.party_funded = true;
         
-        if (deals[dealId].counterparty_funded) {
+        // checks if the counterparty has already funded the deal
+        // if yes - execute swap, if no - emit PartyFunded event
+        if (deal.counterparty_funded) {
             partyVerifiesAndExecutes(dealId);
         } else {
-            emit PartyFunded(dealId, deals[dealId].party);
+            emit PartyFunded(dealId, deal.party);
         }
     } 
     // process funding for Counterparty
-    else if (msg.sender == deals[dealId].counterparty) {
-        require(!deals[dealId].counterparty_funded, "Counterparty has already funded the deal");
+    else if (funder == deal.counterparty) {
+        require(!deal.counterparty_funded, "Counterparty has already funded the deal");
         
-        // TODO: call deposit function on escrow.sol
+        // call deposit function on escrow.sol
+        escrow.deposit(dealId, funder, deal.counterparty_token, deal.counterparty_token_amount);
         
-        deals[dealId].counterparty_funded = true;
+        // update deal.counterparty_funded to true
+        deal.counterparty_funded = true;
         
-        if (deals[dealId].party_funded) {
+        // checks if the party has already funded the deal
+        // if yes - execute swap, if no - emit CounterpartyFunded event
+        if (deal.party_funded) {
             counterpartyVerifiesAndExecutes(dealId);
         } else {
-            emit CounteryPartyFunded(dealId, deals[dealId].counterparty);
+            emit CounteryPartyFunded(dealId, deal.counterparty);
         }
     }
 }
