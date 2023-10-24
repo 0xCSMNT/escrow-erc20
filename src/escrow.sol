@@ -7,15 +7,22 @@ import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.so
 
 
 contract Escrow {
+    
+    event Deposit(uint indexed dealId, address indexed funder, address indexed tokenAddress, uint tokenAmount);
     // state variables
 
     // functions
     // takes dealId, funder, token address and token amount
     function deposit(uint dealId, address funder, address tokenAddress, uint tokenAmount) external {
+        IERC20 token = IERC20(tokenAddress);
+        
         // verify in some way (maybe not necessary)
+        
         // call transferFrom on token contract
+        require(token.transferFrom(funder, address(this), tokenAmount), "transferFrom failed");        
 
-        // TODO: emit deposit event
+        //emit deposit event
+        emit Deposit(dealId, funder, tokenAddress, tokenAmount);
     }
 
     // withdrawals should not work unless deal is verified or deal is canceled
