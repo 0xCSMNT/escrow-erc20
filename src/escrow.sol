@@ -3,17 +3,17 @@
 pragma solidity ^0.8.0;
 
 // ERC20 interface is imported
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 
 contract Escrow {
     // state variables
 
-    // mapping to connect deposits to deals on verifier.sol
-
     // functions
-    function deposit(address tokenAddress, uint256 amount) public {
-        // logic here
+    // takes dealId, funder, token address and token amount
+    function deposit(uint dealId, address funder, address tokenAddress, uint tokenAmount) external {
+        // verify in some way (maybe not necessary)
+        // call transferFrom on token contract
 
         // TODO: emit deposit event
     }
