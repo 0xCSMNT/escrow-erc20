@@ -3,10 +3,20 @@ pragma solidity 0.8.18;
 
 import "./IEscrow.sol";
 
+// TODO: better error messages
+// TODO: tie executeSwap to escrow.sol
+// TODO: tie cancelDeal to escrow.sol
+// TODO: refactor fundDeal as its too long
+// TODO: check require statements for any redundancies
+
 contract Verifier {
     // interface to escrow contract
+    // declares variable of type IEscrow called "escrow"
+    // "escrow" is an instance of the IEscrow contract
     IEscrow public escrow;
 
+    // need to set up constructor to take in address of escrow contract
+    // do this when deploying the verifier contract
     constructor(address _escrowAddress) {
         escrow = IEscrow(_escrowAddress);
     }
@@ -41,7 +51,7 @@ contract Verifier {
     );
 
     event PartyFunded(uint indexed dealId, address indexed party);
-    event CounteryPartyFunded(
+    event CounterPartyFunded(
         uint indexed dealId,
         address indexed counterparty
     );
@@ -58,10 +68,9 @@ contract Verifier {
         address counterparty_token;
         uint counterparty_token_amount;
         bool party_funded;
-        bool counterparty_funded;
-        bool deal_verified; // I think this is redundant
+        bool counterparty_funded;        
         bool deal_canceled;
-        bool deal_completed; // Dont need both deal_verified and deal_completed
+        bool deal_executed; // use instead of deal_verified and deal_completed
     }
 
     // state variables
@@ -87,7 +96,6 @@ contract Verifier {
                 party_token_amount,
                 counterparty_token,
                 counterparty_token_amount,
-                false,
                 false,
                 false,
                 false,
@@ -126,7 +134,9 @@ contract Verifier {
     if (funder == deal.party) {
         require(!deal.party_funded, "Party has already funded the deal");
         
-        //call deposit function on escrow.sol
+        //call deposit function on escrow.sol contra
+        // the escrow object knows the deposit method exists because
+        // it is defind in the IEscrow interface
         escrow.deposit(dealId, funder, deal.party_token, deal.party_token_amount);
         
         // update deal.party_funded to true
@@ -155,12 +165,10 @@ contract Verifier {
         if (deal.party_funded) {
             counterpartyVerifiesAndExecutes(dealId);
         } else {
-            emit CounteryPartyFunded(dealId, deal.counterparty);
+            emit CounterPartyFunded(dealId, deal.counterparty);
         }
     }
 }
-
-
 
     // checks that counterparty has funded the deal and updates the deal_verified state to true
     function partyVerifiesAndExecutes(uint dealId) public onlyParty(dealId) {
@@ -176,25 +184,26 @@ contract Verifier {
         executeSwap(dealId);
     }
 
-    // checks that deal is funded, and not verified, completed or canceled
-    function executeSwap(uint dealId) internal {
+    // checks that deal is funded, and not completed or canceled
+    // keep this private as it is only called by the 
+    // partyVerifiesAndExecutes and counterpartyVerifiesAndExecutes functions
+    function executeSwap(uint dealId) private {
         require(
-            deals[dealId].party_funded == true &&
-                deals[dealId].counterparty_funded == true,
+            deals[dealId].party_funded == true && // could be redundant
+                deals[dealId].counterparty_funded == true, // could be redundant
             "Both parties must fund the deal to execute the swap"
         );
 
         // TODO: swaps ownership of the stakes on escrow.sol        
 
         // set deal_verified to true
-        deals[dealId].deal_verified = true;
-        emit SwapExecuted(dealId, deals[dealId].deal_verified);
+        deals[dealId].deal_executed = true;
+        emit SwapExecuted(dealId, deals[dealId].deal_executed);
     }
 
     function checkDealStatus(uint dealId) public view returns (bool) {
         if (
-            deals[dealId].deal_verified == true ||
-            deals[dealId].deal_completed == true ||
+            deals[dealId].deal_executed == true ||            
             deals[dealId].deal_canceled == true
         ) {
             return false;
@@ -205,7 +214,9 @@ contract Verifier {
     function cancelDeal(uint dealId) public {
         require (
                 (msg.sender == deals[dealId].party && deals[dealId].party_funded == true) ||
-                (msg.sender == deals[dealId].counterparty && deals[dealId].counterparty_funded) == true);
+                (msg.sender == deals[dealId].counterparty && deals[dealId].counterparty_funded == true),
+                "Only a funded party or counterparty can cancel"
+            );
         require(checkDealStatus(dealId), "Deal cannot be canceled in its current state");
         deals[dealId].deal_canceled = true;
         emit DealCanceled(dealId);
