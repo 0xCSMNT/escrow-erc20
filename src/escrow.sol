@@ -1,37 +1,52 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity ^0.8.0;
 
-// ERC20 interface is imported
 import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
-
 contract Escrow {
-    
-    event Deposit(uint indexed dealId, address indexed funder, address indexed tokenAddress, uint tokenAmount);
-    // state variables
 
-    // functions
-    // takes dealId, funder, token address and token amount
+    // State variables
+    address public admin;
+    address public verifier;
+
+    // Events
+    event Deposit(uint indexed dealId, address indexed funder, address indexed tokenAddress, uint tokenAmount);
+    event Withdrawal(uint indexed dealId, address indexed withdrawer, address indexed tokenAddress, uint tokenAmount);
+
+    // Modifiers
+    modifier onlyVerifier() {
+        require(msg.sender == verifier, "Only Verifier can call this");
+        _;
+    }
+
+    modifier onlyAdmin() {
+        require(msg.sender == admin, "Only admin can call this");
+        _;
+    }
+
+    // Constructor
+    constructor() {
+        admin = msg.sender;
+        verifier = address(0);
+    }
+
+    // Set verifier
+    function setVerifier(address _verifier) external onlyAdmin {
+        verifier = _verifier;
+    }
+
+    // Deposit function
     function deposit(uint dealId, address funder, address tokenAddress, uint tokenAmount) external {
         IERC20 token = IERC20(tokenAddress);
-        
-        // verify in some way (maybe not necessary)
-        
-        // call transferFrom on token contract
-        require(token.transferFrom(funder, address(this), tokenAmount), "transferFrom failed");        
-
-        //emit deposit event
+        require(token.transferFrom(funder, address(this), tokenAmount), "transferFrom failed");
         emit Deposit(dealId, funder, tokenAddress, tokenAmount);
     }
 
-    // withdrawals should not work unless deal is verified or deal is canceled
-    // once the deal is funded by party or counterparty, they must wait for either
-    function withdraw(address tokenAddress, uint256 amount) public {
-        // logic here
-
-        // TODO: emit withdrawal event
+    // Withdraw function
+    function withdraw(uint dealId, address withdrawer, address tokenAddress, uint256 tokenAmount) external onlyVerifier {
+        IERC20 token = IERC20(tokenAddress);
+        require(token.transfer(withdrawer, tokenAmount), "transfer failed");
+        emit Withdrawal(dealId, withdrawer, tokenAddress, tokenAmount);
     }
 }
-
 

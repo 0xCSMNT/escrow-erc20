@@ -9,5 +9,11 @@ interface IEscrow {
         uint tokenAmount
     ) external;
 
-    function withdraw(address tokenAddress, uint amount) external;
+    function withdraw(
+        uint dealId,
+        address withdrawer,
+        address tokenAddress,
+        uint tokenAmount
+    ) external;
+        
 }

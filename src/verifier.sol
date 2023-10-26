@@ -4,10 +4,9 @@ pragma solidity 0.8.18;
 import "./IEscrow.sol";
 
 // TODO: better error messages
-// TODO: tie executeSwap to escrow.sol
-// TODO: tie cancelDeal to escrow.sol
 // TODO: refactor fundDeal as its too long
 // TODO: check require statements for any redundancies
+
 
 contract Verifier {
     // interface to escrow contract
@@ -19,8 +18,7 @@ contract Verifier {
     // do this when deploying the verifier contract
     constructor(address _escrowAddress) {
         escrow = IEscrow(_escrowAddress);
-    }
-    
+    }    
     
     // modifiers
     modifier onlyParty(uint dealId) {
@@ -49,7 +47,6 @@ contract Verifier {
         address counterparty_token,
         uint counterparty_token_amount
     );
-
     event PartyFunded(uint indexed dealId, address indexed party);
     event CounterPartyFunded(
         uint indexed dealId,
@@ -168,7 +165,7 @@ contract Verifier {
             emit CounterPartyFunded(dealId, deal.counterparty);
         }
     }
-}
+    }
 
     // checks that counterparty has funded the deal and updates the deal_verified state to true
     function partyVerifiesAndExecutes(uint dealId) public onlyParty(dealId) {
@@ -194,7 +191,8 @@ contract Verifier {
             "Both parties must fund the deal to execute the swap"
         );
 
-        // TODO: swaps ownership of the stakes on escrow.sol        
+        // TODO: swaps ownership of the stakes on escrow.sol 
+        // I think this is redundant, just need to update deal state       
 
         // set deal_verified to true
         deals[dealId].deal_executed = true;
@@ -220,5 +218,43 @@ contract Verifier {
         require(checkDealStatus(dealId), "Deal cannot be canceled in its current state");
         deals[dealId].deal_canceled = true;
         emit DealCanceled(dealId);
+    }
+
+    function withdraw(uint dealId) public {
+        // checks that the deal is either executed or canceled
+        require (checkDealStatus(dealId) == false);
+            
+        // check msg sender is party or counterparty
+        require ((msg.sender == deals[dealId].party)||
+                 (msg.sender == deals[dealId].counterparty));
+        
+        // set withdrawer and deal variables
+        address withdrawer = msg.sender;
+        Deal storage deal = deals[dealId];                 
+        
+        // CANCELLED DEAL: both parties can withdraw their original stakes
+        if (deal.deal_canceled == true) {
+            // if withdrawer is party withdraw party stake and set party_token_amount to zero
+            if (withdrawer == deal.party) {
+                escrow.withdraw(dealId, withdrawer, deal.party_token, deal.party_token_amount);
+                deal.party_token_amount = 0;
+            // if withdrawer is counterparty withdraw counterparty stake and set counterparty_token_amount to zero  
+            } else if (withdrawer == deal.counterparty) {
+                escrow.withdraw(dealId, withdrawer, deal.counterparty_token, deal.counterparty_token_amount);
+                deal.counterparty_token_amount = 0;
+            }
+        }
+        // EXECUTED DEAL: both parties can withdraw the swapped stake
+        else if (deal.deal_executed == true) {
+            // if withdrawer is party withdraw counterparty stake and set counterparty_token_amount to zero
+            if (withdrawer == deal.party) {
+                escrow.withdraw(dealId, withdrawer, deal.counterparty_token, deal.counterparty_token_amount);
+                deal.counterparty_token_amount = 0;
+            // if withdrawer is counterparty withdraw party stake and set party_token_amount to zero
+            } else if (withdrawer == deal.counterparty) {
+                escrow.withdraw(dealId, withdrawer, deal.party_token, deal.party_token_amount);
+                deal.party_token_amount = 0;
+            }
+        }           
     }
 }
