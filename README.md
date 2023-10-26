@@ -73,7 +73,7 @@ Users can initiate a "deal," where one party ("Party") sets the terms, including
 
 ## Phase 1: Smart Contracts
 - [ ] Write `escrow.sol`
-  - [ ] Implement `deposit()` function for both Party and Counterparty.
+  - [x] Implement `deposit()` function for both Party and Counterparty.
   - [ ] Implement `withdraw()` function.
 - [x] Write `verifier.sol`
   - [x] Define `Deal` struct.
@@ -82,6 +82,7 @@ Users can initiate a "deal," where one party ("Party") sets the terms, including
   - [x] Implement `verify_deal()` function.
   - [x] Implement `cancel_deal()` function.
 - [x] Add events for important state changes.
+- [ ] Add inline comments for complex operations within functions
 
 ## Phase 2: Front-End
 - [ ] Set up a basic front-end using Web3.js.
@@ -91,6 +92,13 @@ Users can initiate a "deal," where one party ("Party") sets the terms, including
 - [ ] Display relevant events.
 
 ## Phase 3: Testing and Debugging
+- [ ] Write tests for better debugging and improvements.
+- [ ] Optimize the code 
+  - [ ] Assess gas efficiency
+  - [ ] Access Control: Consider Admin Role for upgrades and emergency stops
+  - [ ] State Change Order - Checks-Effects-Interactions
+  - [ ] Event Handling - Check if more events will help offchain interactions
+  - [ ] rework `checkDealStatus()` to be more descriptive
 - [ ] Conduct thorough tests on both smart contracts.
 - [ ] Test the front-end.
 - [ ] Debug and resolve any issues.
