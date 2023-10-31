@@ -72,9 +72,9 @@ Users can initiate a "deal," where one party ("Party") sets the terms, including
 # Development Plan
 
 ## Phase 1: Smart Contracts
-- [ ] Write `escrow.sol`
+- [x] Write `escrow.sol`
   - [x] Implement `deposit()` function for both Party and Counterparty.
-  - [ ] Implement `withdraw()` function.
+  - [x] Implement `withdraw()` function.
 - [x] Write `verifier.sol`
   - [x] Define `Deal` struct.
   - [x] Implement `createDeal()` function.
