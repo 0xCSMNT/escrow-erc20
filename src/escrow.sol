@@ -2,10 +2,10 @@
 pragma solidity ^0.8.0;
 
 // IMPORTS FOR LOCAL ENVIRONMENT
-// import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 // IMPORTS FOR REMIX
-import {IERC20 } from "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.4.0/contracts/token/ERC20/IERC20.sol";
+// import {IERC20 } from "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.4.0/contracts/token/ERC20/IERC20.sol";
 
 contract Escrow {
 
@@ -16,7 +16,7 @@ contract Escrow {
     // Events
     event Deposit(uint indexed dealId, address indexed funder, address indexed tokenAddress, uint tokenAmount);
     event Withdrawal(uint indexed dealId, address indexed withdrawer, address indexed tokenAddress, uint tokenAmount);
-
+    
     // Modifiers
     modifier onlyVerifier() {
         require(msg.sender == verifier, "Only Verifier can call this");
