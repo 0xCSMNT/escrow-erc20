@@ -2,27 +2,38 @@
 
 pragma solidity ^0.8.0;
 
-import {Script} from "forge-std/Script.sol";
-import {Verifier} from "../src/verifier.sol";
-import {Escrow} from "../src/escrow.sol";
+import {Script, console} from "forge-std/Script.sol";
+import {MockLinkToken} from "../src/TestTokens.sol";
+import {MockUniToken} from "../src/TestTokens.sol";
+import {Verifier} from "../src/Verifier.sol";
+import {Escrow} from "../src/Escrow.sol";
 
-contract DeployVerifier is Script {
+contract DeployContracts is Script {
 
-    function run() external returns (Escrow, Verifier) {
+    function run() external {
         vm.startBroadcast();
-        
-        // Deploy Escrow contract and get address
-        Escrow escrow = new Escrow();
-        address escrowAddress = address(escrow);
 
-        // Deploy Verifier contract and pass in Escrow address
-        Verifier verifier = new Verifier(escrowAddress);
-        escrow.setVerifier(address(verifier));
+        // Deploy the mock tokens
+        MockLinkToken mockLink = new MockLinkToken();
+        MockUniToken mockUni = new MockUniToken();
+
+        // Deploy the Escrow and Verifier contracts
+        Escrow escrow = new Escrow();
+        Verifier verifier = new Verifier(address(escrow));
         
+        // Set up the Escrow contract with the verifier
+        escrow.setVerifier(address(verifier));
+
         vm.stopBroadcast();
-        return (escrow, verifier);
+
+        // Output the addresses of the deployed contracts
+        console.log("MockLinkToken deployed at:", address(mockLink));
+        console.log("MockUniToken deployed at:", address(mockUni));
+        console.log("Escrow deployed at:", address(escrow));
+        console.log("Verifier deployed at:", address(verifier));
     }
 }
+
 
 
 
