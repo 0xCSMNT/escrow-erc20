@@ -5,13 +5,13 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract JOHNToken is ERC20 {
     constructor() ERC20("JOHN", "JOHN") {
-        _mint(0x5B38Da6a701c568545dCfcB03FcB875f56beddC4, 100 * 10 ** decimals());
+        _mint(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266, 100 * 10 ** decimals()); // Account 0
     }
 }
 
 contract MARYToken is ERC20 {
     constructor() ERC20("MARY", "MARY") {
-        _mint(0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2, 100 * 10 ** decimals());
+        _mint(0x70997970C51812dc3A010C7d01b50e0d17dc79C8, 100 * 10 ** decimals()); // Account 1
     }
 }
 

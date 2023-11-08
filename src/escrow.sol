@@ -52,5 +52,10 @@ contract Escrow {
         require(token.transfer(withdrawer, tokenAmount), "transfer failed");
         emit Withdrawal(dealId, withdrawer, tokenAddress, tokenAmount);
     }
+
+    // View Verifer address function
+    function viewVerifierAddress() external view returns (address) {
+        return verifier;
+    }
 }
 

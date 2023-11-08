@@ -257,4 +257,9 @@ contract Verifier {
             }
         }           
     }
+
+    // view Escrow address
+    function viewEscrowAddress() public view returns (address) {
+        return address(escrow);
+    }
 }
