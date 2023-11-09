@@ -18,13 +18,9 @@ contract VerifierTest is StdCheats, Test {
 
     // CONSTANTS
     uint256 public constant TOKEN_MINT_BALANCE = 100;
+    uint256 public constant TOKEN_TRANSFER_AMOUNT = 10;
     address public constant DEV_ACCOUNT_0 = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
     address public constant DEV_ACCOUNT_1 = 0x70997970C51812dc3A010C7d01b50e0d17dc79C8;
-    
-    // VARIABLES
-    uint256 public expectedLinkBalance;
-    uint256 public expectedUniBalance;
-
 
     // SETUP FUNCTION 
     function setUp() external {
@@ -36,46 +32,78 @@ contract VerifierTest is StdCheats, Test {
         verifier = deployer.verifier();
         mockLink = deployer.mockLink();
         mockUni = deployer.mockUni();
-
-        // Set expected balances using decimals
-        expectedLinkBalance = TOKEN_MINT_BALANCE * (10 ** uint256(mockLink.decimals()));
-        expectedUniBalance = TOKEN_MINT_BALANCE * (10 ** uint256(mockUni.decimals()));
     }
 
-    // TEST FUNCTIONS
+    ////////// TEST FUNCTIONS //////////
 
-    // test verifier address set correctly
+    // TEST VERIFIER ADDRESS ON ESCROW
     function testVeriferAddressOnEscrow() public {
-        address escrowVerifierAddress = escrow.viewVerifierAddress();
-        address verifierAddress = address(verifier);
-        assertEq(escrowVerifierAddress, verifierAddress, "Verifer address mismatch");
-        console.log("[IN TEST] Verifier address: ", verifierAddress);
-        console.log("[IN TEST] Verifier address on Escrow contract: ", escrowVerifierAddress);
+        
+        assertEq(escrow.viewVerifierAddress(), address(verifier), "Verifer address mismatch");
+        console.log("[IN TEST] Verifier address: ", address(verifier));
+        console.log("[IN TEST] Verifier address on Escrow contract: ", escrow.viewVerifierAddress());
         
     }
 
-    // test balances of tokens for user accounts
-    // dev account 0 should have 100e18 mLINK
-    // dev account 1 should have 100e18 mUNI
+    // TEST BALANCE OF TOKENS FOR USER ACCOUNTS
     function testAccountBalancesForDummyTokens() public {
-        
-        // dev account addresses
-        address devAccount0 = DEV_ACCOUNT_0;
-        address devAccount1 = DEV_ACCOUNT_1;
 
-        // balances of dev accounts
-        uint256 devAccount0LinkBalance = mockLink.balanceOf(devAccount0);
-        uint256 devAccount1UniBalance = mockUni.balanceOf(devAccount1);
-        console.log("[IN TEST] Dev Account 0 LINK balance: ", devAccount0LinkBalance);
-        console.log("[IN TEST] Dev Account 1 UNI balance: ", devAccount1UniBalance);
+        assertEq(mockLink.balanceOf(DEV_ACCOUNT_0), TOKEN_MINT_BALANCE, "incorrect LINK balance for dev account 0");
+        assertEq(mockUni.balanceOf(DEV_ACCOUNT_1), TOKEN_MINT_BALANCE, "incorrect UNI balance for dev account 1");
 
-        // test balances
-        assertEq(devAccount0LinkBalance, expectedLinkBalance, "incorrect LINK balance for dev account 0");
-        assertEq(devAccount1UniBalance, expectedUniBalance, "incorrect UNI balance for dev account 1");
-        
+        // dev account 0 should have 100e18 mLINK
+        // dev account 1 should have 100e18 mUNI
+
+        console.log("[IN TEST] Dev Account 0 LINK balance: ", mockLink.balanceOf(DEV_ACCOUNT_0));
+        console.log("[IN TEST] Dev Account 1 UNI balance: ", mockUni.balanceOf(DEV_ACCOUNT_1));
+}
+
+    // createDeal() 
+    // 1. first test 1 user can create a deal
+    // 2. then test both users can create a deal
+
+    // TEST USER 0 CREATES A DEAL
+    function testDevAccount0CanCreateADeal() public {
+        vm.startPrank(DEV_ACCOUNT_0);
+        verifier.createDeal(
+            DEV_ACCOUNT_1,
+            address(mockLink),
+            TOKEN_TRANSFER_AMOUNT,
+            address(mockUni),
+            TOKEN_TRANSFER_AMOUNT
+        );
+        vm.stopPrank();
+
+        // Retrieve the deal details using tuple destructuring
+        (
+            address party,
+            address counterparty,
+            address partyToken,
+            uint256 partyTokenAmount,
+            address counterpartyToken,
+            uint256 counterpartyTokenAmount,
+            bool partyFunded,
+            bool counterpartyFunded,
+            bool dealCanceled,
+            bool dealExecuted
+        ) = verifier.deals(0);
+
+        // Assert that the deal was created correctly
+        assertEq(party, DEV_ACCOUNT_0, "incorrect party address");
+        assertEq(counterparty, DEV_ACCOUNT_1, "incorrect counterparty address");
+        assertEq(partyToken, address(mockLink), "incorrect party token address");
+        assertEq(partyTokenAmount, TOKEN_TRANSFER_AMOUNT, "incorrect party token amount");
+        assertEq(counterpartyToken, address(mockUni), "incorrect counterparty token address");
+        assertEq(counterpartyTokenAmount, TOKEN_TRANSFER_AMOUNT, "incorrect counterparty token amount");
+        assertEq(partyFunded, false, "incorrect party funded status");
+        assertEq(counterpartyFunded, false, "incorrect counterparty funded status");
+        assertEq(dealCanceled, false, "incorrect deal canceled status");
+        assertEq(dealExecuted, false, "incorrect deal executed status");
+
+
+        // check event emited
     }
 
-    // createDeal()
     // fundDeal()
     // partyVerifiesAndExecutes()
     // counterpartyVerifiesAndExecutes()
