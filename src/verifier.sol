@@ -67,10 +67,11 @@ contract Verifier {
         bool party_funded;
         bool counterparty_funded;        
         bool deal_canceled;
-        bool deal_executed; // use instead of deal_verified and deal_completed
+        bool deal_executed; 
     }
 
     // state variables
+    // public array of Deal structs called "deals"
     Deal[] public deals;
 
     mapping(address => uint[]) public partyToDeal; // maps party address to deal ids
