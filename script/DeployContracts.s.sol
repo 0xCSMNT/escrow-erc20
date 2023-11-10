@@ -31,11 +31,12 @@ contract DeployContracts is Script {
 
         vm.stopBroadcast();
 
-        // Output the addresses of the deployed contracts
-        console.log("[IN DEPLOY] MockLinkToken deployed at:", address(mockLink));
-        console.log("[IN DEPLOY] MockUniToken deployed at:", address(mockUni));
-        console.log("[IN DEPLOY] Escrow deployed at:", address(escrow));
-        console.log("[IN DEPLOY] Verifier deployed at:", address(verifier));
+        ////////// LOGS FOR DEBUGGING //////////
+
+        // console.log("[IN DEPLOY] MockLinkToken deployed at:", address(mockLink));
+        // console.log("[IN DEPLOY] MockUniToken deployed at:", address(mockUni));
+        // console.log("[IN DEPLOY] Escrow deployed at:", address(escrow));
+        // console.log("[IN DEPLOY] Verifier deployed at:", address(verifier));
     }
 }
 
