@@ -9,6 +9,7 @@ import {StdCheats} from "forge-std/StdCheats.sol";
 import {DeployContracts} from "script/DeployContracts.s.sol";
 import {MockLinkToken} from "src/TestTokens.sol";
 import {MockUniToken} from "src/TestTokens.sol";
+import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract VerifierTest is StdCheats, Test {
     Verifier public verifier;
@@ -58,8 +59,29 @@ contract VerifierTest is StdCheats, Test {
         vm.stopPrank();
     }
     
-    // Helper function: user x funds a deal
+    // Helper function: user x funds deal y
+    function fundDealForTest(
+        address funder,
+        uint dealId
+    ) internal {
+        vm.startPrank(funder);
+        verifier.fundDeal(dealId);
+        vm.stopPrank();
+    }
 
+    // Helper function to set allowance for user x
+    function approveTokenTransferForDeal(
+        address tokenAddress,
+        address funder,
+        uint256 amount
+    ) internal {
+        vm.startPrank(funder);
+        // mockUni.approve(address(escrow), TOKEN_TRANSFER_AMOUNT);
+        IERC20 token = IERC20(tokenAddress);
+        token.approve(address(escrow), amount);
+        vm.stopPrank();
+    }
+        
     // Helper function to get deal details for deal y
     function getDealDetails(
         uint dealIndex
@@ -166,7 +188,7 @@ contract VerifierTest is StdCheats, Test {
         );
     }
 
-    // TODO: TEST USER 1 CAN CREATE A DEAL AFTER USER 0 HAS CREATED A DEAL
+    // TEST USER 1 CAN CREATE A DEAL AFTER USER 0 HAS CREATED A DEAL
     function testDevAccount1CanCreateDeal1() public {
         // Arrange
 
@@ -180,7 +202,6 @@ contract VerifierTest is StdCheats, Test {
             TOKEN_TRANSFER_AMOUNT
         );
 
-        // Act
         // User 1 creates deal 1
         createDealForTest(
             DEV_ACCOUNT_1,
@@ -206,13 +227,25 @@ contract VerifierTest is StdCheats, Test {
         );
     }
 
-    // fundDeal() TESTS    
+    // fundDeal() TESTS
+    // need to test:
+        // that party can fund if escrow verified
+        // that party cannot fund if escrow not verified
+        // that party cannot fund when party_funded = true
+        // that counterparty cannot fund when party_funded = true  
+
+        // that counterparty can fund if verified
+        // that counterparty cannot fund if not verified
+        // that counterparty cannot fund when counterparty_funded = true
+        // that party cannot fund when counterparty_funded = true
+
 
     // TEST USER 0 CAN FUND A DEAL
-    function testUser0CanFundDeal() public {
-        // Arrange - set up the deal
-        vm.startPrank(DEV_ACCOUNT_0);
-        verifier.createDeal(
+    function testUser0CanFundDeal0WhenVerified() public {
+        
+        // User 0 creates deal 0
+        createDealForTest(
+            DEV_ACCOUNT_0,
             DEV_ACCOUNT_1,
             address(mockLink),
             TOKEN_TRANSFER_AMOUNT,
@@ -220,10 +253,11 @@ contract VerifierTest is StdCheats, Test {
             TOKEN_TRANSFER_AMOUNT
         );
 
-        // Act - approve and fund the deal
-        mockLink.approve(address(escrow), TOKEN_TRANSFER_AMOUNT);
-        verifier.fundDeal(0);
-        vm.stopPrank();
+        // User 0 approves the transfer of tokens to the escrow contract
+        approveTokenTransferForDeal(address(mockLink), DEV_ACCOUNT_0, TOKEN_TRANSFER_AMOUNT);
+        
+        // User 0 funds the deal
+        fundDealForTest(DEV_ACCOUNT_0, 0);
 
         // Assert - check the deal was funded correctly
         // check balances of escrow and user
