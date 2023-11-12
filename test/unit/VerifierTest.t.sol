@@ -38,7 +38,31 @@ contract VerifierTest is StdCheats, Test {
 
     ////////// HELPER FUNCTIONS //////////
 
-    // Helper function to get deal details
+    // User x creates a deal 
+    function createDealForTest(
+        address party,
+        address counterparty,
+        address party_token,
+        uint256 party_token_amount,
+        address counterparty_token,
+        uint256 counterparty_token_amount
+    ) internal {
+        vm.startPrank(party);
+        verifier.createDeal(
+            counterparty,
+            party_token,
+            party_token_amount,
+            counterparty_token,
+            counterparty_token_amount
+        );
+        vm.stopPrank();
+    }
+    
+     
+
+    // user x funds deal y
+
+    // Helper function to get deal details for deal y
     function getDealDetails(
         uint dealIndex
     ) internal view returns (Verifier.Deal memory deal) {
@@ -112,20 +136,21 @@ contract VerifierTest is StdCheats, Test {
     // 1. first test 1 user can create a deal
     // 2. then test both users can create a deal
     // 3. create helper function so you can create an arbitrary number of deals
+    // 4. create assertDealCorrect() function to check an arbitrary number of deals
 
     // TEST USER 0 CREATES A DEAL
     function testDevAccount0CanCreateADeal() public {
+        
         // Arrange
-        vm.startPrank(DEV_ACCOUNT_0);
-        verifier.createDeal(
+        createDealForTest(
+            DEV_ACCOUNT_0,
             DEV_ACCOUNT_1,
             address(mockLink),
             TOKEN_TRANSFER_AMOUNT,
             address(mockUni),
             TOKEN_TRANSFER_AMOUNT
         );
-        vm.stopPrank();
-
+        
         Verifier.Deal memory deal = getDealDetails(0);
 
         // Assert that the deal was created correctly
@@ -167,6 +192,69 @@ contract VerifierTest is StdCheats, Test {
     }
 
     // TODO: TEST USER 1 CAN CREATE A DEAL AFTER USER 0 HAS CREATED A DEAL
+    function testDevAccount1CanCreateADeal() public {
+        // Arrange
+
+        // User 0 creates deal 0
+        vm.startPrank(DEV_ACCOUNT_0);
+        verifier.createDeal(
+            DEV_ACCOUNT_1,
+            address(mockLink),
+            TOKEN_TRANSFER_AMOUNT,
+            address(mockUni),
+            TOKEN_TRANSFER_AMOUNT
+        );
+        vm.stopPrank();
+
+        // Act
+        // User 1 creates deal 1
+        vm.startPrank(DEV_ACCOUNT_1);
+        verifier.createDeal(
+            DEV_ACCOUNT_0,
+            address(mockUni),
+            TOKEN_TRANSFER_AMOUNT,
+            address(mockLink),
+            TOKEN_TRANSFER_AMOUNT
+        );
+        vm.stopPrank();
+        Verifier.Deal memory deal = getDealDetails(1);
+
+        // Assert
+        assertEq(deal.party, DEV_ACCOUNT_1, "incorrect party address");
+        assertEq(
+            deal.counterparty,
+            DEV_ACCOUNT_0,
+            "incorrect counterparty address"
+        );
+        assertEq(
+            deal.party_token,
+            address(mockUni),
+            "incorrect party token address"
+        );
+        assertEq(
+            deal.party_token_amount,
+            TOKEN_TRANSFER_AMOUNT,
+            "incorrect party token amount"
+        );
+        assertEq(
+            deal.counterparty_token,
+            address(mockLink),
+            "incorrect counterparty token address"
+        );
+        assertEq(
+            deal.counterparty_token_amount,
+            TOKEN_TRANSFER_AMOUNT,
+            "incorrect counterparty token amount"
+        );
+        assertFalse(deal.party_funded, "incorrect party funded status");
+        assertFalse(
+            deal.counterparty_funded,
+            "incorrect counterparty funded status"
+        );
+        assertFalse(deal.deal_canceled, "incorrect deal canceled status");
+        assertFalse(deal.deal_executed, "incorrect deal executed status");
+
+    }
 
     // fundDeal() TESTS    
 
@@ -210,13 +298,56 @@ contract VerifierTest is StdCheats, Test {
         );
         assertFalse(deal.deal_canceled, "Deal incorrectly marked as canceled");
         assertFalse(deal.deal_executed, "Deal incorrectly marked as executed");
-
-        // Verifier.Deal memory deal = getDealDetails(0);
-        // assertTrue(deal.partyFunded, "Deal not marked as funded by the party");
     }
 
-    // TODO: FUNCTIONS TO TEST
+    // TEST USER 1 CAN FUND A DEAL AFTER USER 0 CREATED IT
+    function testUser1CanFundDealCreatedByUserO() public {
+        // Arrange - set up the deal
+        vm.startPrank(DEV_ACCOUNT_0);
+        verifier.createDeal(
+            DEV_ACCOUNT_1,
+            address(mockLink),
+            TOKEN_TRANSFER_AMOUNT,
+            address(mockUni),
+            TOKEN_TRANSFER_AMOUNT
+        );
+        vm.stopPrank();
+
+        // Act - user 1 approves and funds the deal
+        vm.startPrank(DEV_ACCOUNT_1);
+        mockUni.approve(address(escrow), TOKEN_TRANSFER_AMOUNT);
+        verifier.fundDeal(0);
+        vm.stopPrank();
+
+        // Assert - check the deal was funded correctly
+        // check balances of escrow and user
+        assertEq(
+            mockUni.balanceOf(address(escrow)),
+            TOKEN_TRANSFER_AMOUNT,
+            "incorrect escrow balance"
+        );
+        assertEq(
+            mockUni.balanceOf(DEV_ACCOUNT_1),
+            TOKEN_MINT_BALANCE - TOKEN_TRANSFER_AMOUNT,
+            "incorrect user balance"
+        );
+        
+        // check status of deal using helper function
+        Verifier.Deal memory deal = getDealDetails(0);
+      
+        assertTrue(deal.counterparty_funded, "Deal not marked as funded by the counterparty");
+        assertFalse(deal.party_funded, "Deal incorrectly marked as funded by the party");
+        assertFalse(deal.deal_canceled, "Deal incorrectly marked as canceled");
+        assertFalse(deal.deal_executed, "Deal incorrectly marked as executed");
+
+        
+    }
+
     // partyVerifiesAndExecutes()
+
+    // TEST USER 0 CAN VERIFY AND EXECUTE A DEAL
+    
+    // TODO: FUNCTIONS TO TEST
     // counterpartyVerifiesAndExecutes()
     // executeSwap()
     // checkDealStatus()
