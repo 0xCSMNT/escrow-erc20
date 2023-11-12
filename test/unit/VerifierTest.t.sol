@@ -38,7 +38,7 @@ contract VerifierTest is StdCheats, Test {
 
     ////////// HELPER FUNCTIONS //////////
 
-    // User x creates a deal 
+    // Helper Function: User x creates a deal 
     function createDealForTest(
         address party,
         address counterparty,
@@ -58,9 +58,7 @@ contract VerifierTest is StdCheats, Test {
         vm.stopPrank();
     }
     
-     
-
-    // user x funds deal y
+    // Helper function: user x funds a deal
 
     // Helper function to get deal details for deal y
     function getDealDetails(
@@ -93,6 +91,28 @@ contract VerifierTest is StdCheats, Test {
         });
     }
 
+    // Helper function to assert deal created correctly
+    function assertDealCreatedCorrectly(
+        Verifier.Deal memory deal,
+        address party,
+        address counterparty,
+        address party_token,
+        uint256 party_token_amount,
+        address counterparty_token,
+        uint256 counterparty_token_amount
+    ) internal {
+        assertEq(deal.party, party, "incorrect party address");
+        assertEq(deal.counterparty, counterparty, "incorrect counterparty address");
+        assertEq(deal.party_token, party_token, "incorrect party token address");
+        assertEq(deal.party_token_amount, party_token_amount, "incorrect party token amount");
+        assertEq(deal.counterparty_token, counterparty_token, "incorrect counterparty token address");
+        assertEq(deal.counterparty_token_amount, counterparty_token_amount, "incorrect counterparty token amount");
+        assertFalse(deal.party_funded, "incorrect party funded status");
+        assertFalse(deal.counterparty_funded, "incorrect counterparty funded status");
+        assertFalse(deal.deal_canceled, "incorrect deal canceled status");
+        assertFalse(deal.deal_executed, "incorrect deal executed status");
+    }
+
     ////////// TEST FUNCTIONS //////////
 
     // TEST VERIFIER ADDRESS ON ESCROW
@@ -101,11 +121,6 @@ contract VerifierTest is StdCheats, Test {
             escrow.viewVerifierAddress(),
             address(verifier),
             "Verifer address mismatch"
-        );
-        console.log("[IN TEST] Verifier address: ", address(verifier));
-        console.log(
-            "[IN TEST] Verifier address on Escrow contract: ",
-            escrow.viewVerifierAddress()
         );
     }
 
@@ -121,27 +136,12 @@ contract VerifierTest is StdCheats, Test {
             TOKEN_MINT_BALANCE,
             "incorrect UNI balance for dev account 1"
         );
-
-        console.log( // dev account 0 should have 100 mLINK
-            "[IN TEST] Dev Account 0 LINK balance: ",
-            mockLink.balanceOf(DEV_ACCOUNT_0)
-        );
-        console.log( // dev account 1 should have 100 mUNI
-            "[IN TEST] Dev Account 1 UNI balance: ",
-            mockUni.balanceOf(DEV_ACCOUNT_1)
-        );
     }
 
-    // createDeal()
-    // 1. first test 1 user can create a deal
-    // 2. then test both users can create a deal
-    // 3. create helper function so you can create an arbitrary number of deals
-    // 4. create assertDealCorrect() function to check an arbitrary number of deals
-
     // TEST USER 0 CREATES A DEAL
-    function testDevAccount0CanCreateADeal() public {
+    function testDevAccount0CanCreateDeal0() public {
         
-        // Arrange
+        // Arrange - create the deal for the test
         createDealForTest(
             DEV_ACCOUNT_0,
             DEV_ACCOUNT_1,
@@ -151,109 +151,59 @@ contract VerifierTest is StdCheats, Test {
             TOKEN_TRANSFER_AMOUNT
         );
         
+        // Get the deal details from the verifier contract
         Verifier.Deal memory deal = getDealDetails(0);
 
         // Assert that the deal was created correctly
-        assertEq(deal.party, DEV_ACCOUNT_0, "incorrect party address");
-        assertEq(
-            deal.counterparty,
+        assertDealCreatedCorrectly(
+            deal,
+            DEV_ACCOUNT_0,
             DEV_ACCOUNT_1,
-            "incorrect counterparty address"
-        );
-        assertEq(
-            deal.party_token,
             address(mockLink),
-            "incorrect party token address"
-        );
-        assertEq(
-            deal.party_token_amount,
             TOKEN_TRANSFER_AMOUNT,
-            "incorrect party token amount"
-        );
-        assertEq(
-            deal.counterparty_token,
             address(mockUni),
-            "incorrect counterparty token address"
+            TOKEN_TRANSFER_AMOUNT
         );
-        assertEq(
-            deal.counterparty_token_amount,
-            TOKEN_TRANSFER_AMOUNT,
-            "incorrect counterparty token amount"
-        );
-        assertFalse(deal.party_funded, "incorrect party funded status");
-        assertFalse(
-            deal.counterparty_funded,
-            "incorrect counterparty funded status"
-        );
-        assertFalse(deal.deal_canceled, "incorrect deal canceled status");
-        assertFalse(deal.deal_canceled, "incorrect deal executed status");
-
-        // TODO: check deal event emited
     }
 
     // TODO: TEST USER 1 CAN CREATE A DEAL AFTER USER 0 HAS CREATED A DEAL
-    function testDevAccount1CanCreateADeal() public {
+    function testDevAccount1CanCreateDeal1() public {
         // Arrange
 
         // User 0 creates deal 0
-        vm.startPrank(DEV_ACCOUNT_0);
-        verifier.createDeal(
+        createDealForTest(
+            DEV_ACCOUNT_0,
             DEV_ACCOUNT_1,
             address(mockLink),
             TOKEN_TRANSFER_AMOUNT,
             address(mockUni),
             TOKEN_TRANSFER_AMOUNT
         );
-        vm.stopPrank();
 
         // Act
         // User 1 creates deal 1
-        vm.startPrank(DEV_ACCOUNT_1);
-        verifier.createDeal(
+        createDealForTest(
+            DEV_ACCOUNT_1,
             DEV_ACCOUNT_0,
             address(mockUni),
             TOKEN_TRANSFER_AMOUNT,
             address(mockLink),
             TOKEN_TRANSFER_AMOUNT
         );
-        vm.stopPrank();
+        
+        // Get the deal(1) details from the verifier contract
         Verifier.Deal memory deal = getDealDetails(1);
 
-        // Assert
-        assertEq(deal.party, DEV_ACCOUNT_1, "incorrect party address");
-        assertEq(
-            deal.counterparty,
+        // Assert that the deal was created correctly
+        assertDealCreatedCorrectly(
+            deal,
+            DEV_ACCOUNT_1,
             DEV_ACCOUNT_0,
-            "incorrect counterparty address"
-        );
-        assertEq(
-            deal.party_token,
             address(mockUni),
-            "incorrect party token address"
-        );
-        assertEq(
-            deal.party_token_amount,
             TOKEN_TRANSFER_AMOUNT,
-            "incorrect party token amount"
-        );
-        assertEq(
-            deal.counterparty_token,
             address(mockLink),
-            "incorrect counterparty token address"
+            TOKEN_TRANSFER_AMOUNT
         );
-        assertEq(
-            deal.counterparty_token_amount,
-            TOKEN_TRANSFER_AMOUNT,
-            "incorrect counterparty token amount"
-        );
-        assertFalse(deal.party_funded, "incorrect party funded status");
-        assertFalse(
-            deal.counterparty_funded,
-            "incorrect counterparty funded status"
-        );
-        assertFalse(deal.deal_canceled, "incorrect deal canceled status");
-        assertFalse(deal.deal_executed, "incorrect deal executed status");
-
     }
 
     // fundDeal() TESTS    
