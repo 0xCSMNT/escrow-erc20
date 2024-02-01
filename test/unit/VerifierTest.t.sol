@@ -227,7 +227,7 @@ contract VerifierTest is StdCheats, Test {
         );
     }
 
-    // fundDeal() TESTS
+    // fundDeal() TESTS - move most of these to integration tests
     // need to test:
         // that party can fund if escrow verified
         // that party cannot fund if escrow not verified
@@ -256,7 +256,7 @@ contract VerifierTest is StdCheats, Test {
         // User 0 approves the transfer of tokens to the escrow contract
         approveTokenTransferForDeal(address(mockLink), DEV_ACCOUNT_0, TOKEN_TRANSFER_AMOUNT);
         
-        // User 0 funds the deal
+        // User 0 funds deal 0
         fundDealForTest(DEV_ACCOUNT_0, 0);
 
         // Assert - check the deal was funded correctly
