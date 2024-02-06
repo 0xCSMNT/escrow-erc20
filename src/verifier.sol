@@ -7,7 +7,6 @@ import "./IEscrow.sol";
 // TODO: refactor fundDeal as its too long
 // TODO: check require statements for any redundancies
 
-
 contract Verifier {
     // interface to escrow contract
     // declares variable of type IEscrow called "escrow"
@@ -18,8 +17,8 @@ contract Verifier {
     // do this when deploying the verifier contract
     constructor(address _escrowAddress) {
         escrow = IEscrow(_escrowAddress);
-    }    
-    
+    }
+
     // modifiers
     modifier onlyParty(uint dealId) {
         require(
@@ -48,10 +47,7 @@ contract Verifier {
         uint counterparty_token_amount
     );
     event PartyFunded(uint indexed dealId, address indexed party);
-    event CounterPartyFunded(
-        uint indexed dealId,
-        address indexed counterparty
-    );
+    event CounterPartyFunded(uint indexed dealId, address indexed counterparty);
     event DealCanceled(uint indexed dealId);
     event SwapExecuted(uint indexed dealId, bool indexed deal_verified);
 
@@ -65,9 +61,9 @@ contract Verifier {
         address counterparty_token;
         uint counterparty_token_amount;
         bool party_funded;
-        bool counterparty_funded;        
+        bool counterparty_funded;
         bool deal_canceled;
-        bool deal_executed; 
+        bool deal_executed;
     }
 
     // state variables
@@ -117,55 +113,74 @@ contract Verifier {
             counterparty_token_amount
         );
     }
-    
+
     function fundDeal(uint dealId) public {
-    // check deal is not verified, completed or canceled already and that msg.sender is party or counterparty
-    require(checkDealStatus(dealId), "Deal cannot be funded in its current state");
-    require(msg.sender == deals[dealId].party || msg.sender == deals[dealId].counterparty, 
-            "Only the party or counterparty can fund the deal");
-    
-    // state variables
-    address funder = msg.sender;
-    Deal storage deal = deals[dealId];
-    
-    // process funding for Party
-    if (funder == deal.party) {
-        require(!deal.party_funded, "Party has already funded the deal");
-        
-        //call deposit function on escrow.sol contra
-        // the escrow object knows the deposit method exists because
-        // it is defind in the IEscrow interface
-        escrow.deposit(dealId, funder, deal.party_token, deal.party_token_amount);
-        
-        // update deal.party_funded to true
-        deal.party_funded = true;
-        
-        // checks if the counterparty has already funded the deal
-        // if yes - execute swap, if no - emit PartyFunded event
-        if (deal.counterparty_funded) {
-            partyVerifiesAndExecutes(dealId);
-        } else {
-            emit PartyFunded(dealId, deal.party);
+        // check deal is not verified, completed or canceled already and that msg.sender is party or counterparty
+        require(
+            checkDealStatus(dealId),
+            "Deal cannot be funded in its current state"
+        );
+        require(
+            msg.sender == deals[dealId].party ||
+                msg.sender == deals[dealId].counterparty,
+            "Only the party or counterparty can fund the deal"
+        );
+
+        // state variables
+        address funder = msg.sender;
+        Deal storage deal = deals[dealId];
+
+        // process funding for Party
+        if (funder == deal.party) {
+            require(!deal.party_funded, "Party has already funded the deal");
+
+            // call deposit function on escrow.sol contract
+            // the escrow object knows the deposit method exists because
+            // it is defind in the IEscrow interface
+            escrow.deposit(
+                dealId,
+                funder,
+                deal.party_token,
+                deal.party_token_amount
+            );
+
+            // update deal.party_funded to true
+            deal.party_funded = true;
+
+            // checks if the counterparty has already funded the deal
+            // if yes - execute swap, if no - emit PartyFunded event
+            if (deal.counterparty_funded) {
+                partyVerifiesAndExecutes(dealId);
+            } else {
+                emit PartyFunded(dealId, deal.party);
+            }
         }
-    } 
-    // process funding for Counterparty
-    else if (funder == deal.counterparty) {
-        require(!deal.counterparty_funded, "Counterparty has already funded the deal");
-        
-        // call deposit function on escrow.sol
-        escrow.deposit(dealId, funder, deal.counterparty_token, deal.counterparty_token_amount);
-        
-        // update deal.counterparty_funded to true
-        deal.counterparty_funded = true;
-        
-        // checks if the party has already funded the deal
-        // if yes - execute swap, if no - emit CounterpartyFunded event
-        if (deal.party_funded) {
-            counterpartyVerifiesAndExecutes(dealId);
-        } else {
-            emit CounterPartyFunded(dealId, deal.counterparty);
+        // process funding for Counterparty
+        else if (funder == deal.counterparty) {
+            require(
+                !deal.counterparty_funded,
+                "Counterparty has already funded the deal"
+            );
+
+            // call deposit function on escrow.sol
+            escrow.deposit(
+                dealId,
+                funder,
+                deal.counterparty_token,
+                deal.counterparty_token_amount
+            );
+
+            // update deal.counterparty_funded to true
+            deal.counterparty_funded = true;
+
+            // checks if the party has already funded the deal
+            // if yes - execute swap, if no - emit CounterpartyFunded event
+            if (deal.party_funded) {
+                counterpartyVerifiesAndExecutes(dealId);
+            } else {
+                emit CounterPartyFunded(dealId, deal.counterparty);
+            }
         }
-    }
     }
 
     // checks that counterparty has funded the deal and updates the deal_verified state to true
@@ -183,7 +198,7 @@ contract Verifier {
     }
 
     // checks that deal is funded, and not completed or canceled
-    // keep this private as it is only called by the 
+    // keep this private as it is only called by the
     // partyVerifiesAndExecutes and counterpartyVerifiesAndExecutes functions
     function executeSwap(uint dealId) private {
         require(
@@ -192,8 +207,8 @@ contract Verifier {
             "Both parties must fund the deal to execute the swap"
         );
 
-        // TODO: swaps ownership of the stakes on escrow.sol 
-        // I think this is redundant, just need to update deal state       
+        // TODO: swaps ownership of the stakes on escrow.sol
+        // I think this is redundant, just need to update deal state
 
         // set deal_verified to true
         deals[dealId].deal_executed = true;
@@ -202,7 +217,7 @@ contract Verifier {
 
     function checkDealStatus(uint dealId) public view returns (bool) {
         if (
-            deals[dealId].deal_executed == true ||            
+            deals[dealId].deal_executed == true ||
             deals[dealId].deal_canceled == true
         ) {
             return false;
@@ -211,37 +226,54 @@ contract Verifier {
     }
 
     function cancelDeal(uint dealId) public {
-        require (
-                (msg.sender == deals[dealId].party && deals[dealId].party_funded == true) ||
-                (msg.sender == deals[dealId].counterparty && deals[dealId].counterparty_funded == true),
-                "Only a funded party or counterparty can cancel"
-            );
-        require(checkDealStatus(dealId), "Deal cannot be canceled in its current state");
+        require(
+            (msg.sender == deals[dealId].party &&
+                deals[dealId].party_funded == true) ||
+                (msg.sender == deals[dealId].counterparty &&
+                    deals[dealId].counterparty_funded == true),
+            "Only a funded party or counterparty can cancel"
+        );
+        require(
+            checkDealStatus(dealId),
+            "Deal cannot be canceled in its current state"
+        );
         deals[dealId].deal_canceled = true;
         emit DealCanceled(dealId);
     }
 
     function withdraw(uint dealId) public {
         // checks that the deal is either executed or canceled
-        require (checkDealStatus(dealId) == false);
-            
+        require(checkDealStatus(dealId) == false);
+
         // check msg sender is party or counterparty
-        require ((msg.sender == deals[dealId].party)||
-                 (msg.sender == deals[dealId].counterparty));
-        
+        require(
+            (msg.sender == deals[dealId].party) ||
+                (msg.sender == deals[dealId].counterparty)
+        );
+
         // set withdrawer and deal variables
         address withdrawer = msg.sender;
-        Deal storage deal = deals[dealId];                 
-        
+        Deal storage deal = deals[dealId];
+
         // CANCELLED DEAL: both parties can withdraw their original stakes
         if (deal.deal_canceled == true) {
             // if withdrawer is party withdraw party stake and set party_token_amount to zero
             if (withdrawer == deal.party) {
-                escrow.withdraw(dealId, withdrawer, deal.party_token, deal.party_token_amount);
+                escrow.withdraw(
+                    dealId,
+                    withdrawer,
+                    deal.party_token,
+                    deal.party_token_amount
+                );
                 deal.party_token_amount = 0;
-            // if withdrawer is counterparty withdraw counterparty stake and set counterparty_token_amount to zero  
+                // if withdrawer is counterparty withdraw counterparty stake and set counterparty_token_amount to zero
             } else if (withdrawer == deal.counterparty) {
-                escrow.withdraw(dealId, withdrawer, deal.counterparty_token, deal.counterparty_token_amount);
+                escrow.withdraw(
+                    dealId,
+                    withdrawer,
+                    deal.counterparty_token,
+                    deal.counterparty_token_amount
+                );
                 deal.counterparty_token_amount = 0;
             }
         }
@@ -249,14 +281,24 @@ contract Verifier {
         else if (deal.deal_executed == true) {
             // if withdrawer is party withdraw counterparty stake and set counterparty_token_amount to zero
             if (withdrawer == deal.party) {
-                escrow.withdraw(dealId, withdrawer, deal.counterparty_token, deal.counterparty_token_amount);
+                escrow.withdraw(
+                    dealId,
+                    withdrawer,
+                    deal.counterparty_token,
+                    deal.counterparty_token_amount
+                );
                 deal.counterparty_token_amount = 0;
-            // if withdrawer is counterparty withdraw party stake and set party_token_amount to zero
+                // if withdrawer is counterparty withdraw party stake and set party_token_amount to zero
             } else if (withdrawer == deal.counterparty) {
-                escrow.withdraw(dealId, withdrawer, deal.party_token, deal.party_token_amount);
+                escrow.withdraw(
+                    dealId,
+                    withdrawer,
+                    deal.party_token,
+                    deal.party_token_amount
+                );
                 deal.party_token_amount = 0;
             }
-        }           
+        }
     }
 
     // view Escrow address

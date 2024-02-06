@@ -18,8 +18,8 @@ contract VerifierTest is StdCheats, Test {
     MockUniToken public mockUni;
 
     // CONSTANTS
-    uint256 public constant TOKEN_MINT_BALANCE = 100;
-    uint256 public constant TOKEN_TRANSFER_AMOUNT = 10;
+    uint256 public constant TOKEN_MINT_BALANCE = 100 * 10**18;
+    uint256 public constant TOKEN_TRANSFER_AMOUNT = 10 * 10**18;
     address public constant DEV_ACCOUNT_0 =
         0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
     address public constant DEV_ACCOUNT_1 =
@@ -39,7 +39,7 @@ contract VerifierTest is StdCheats, Test {
 
     ////////// HELPER FUNCTIONS //////////
 
-    // Helper Function: User x creates a deal 
+    // Helper Function: User x creates a deal
     function createDealForTest(
         address party,
         address counterparty,
@@ -58,12 +58,9 @@ contract VerifierTest is StdCheats, Test {
         );
         vm.stopPrank();
     }
-    
+
     // Helper function: user x funds deal y
-    function fundDealForTest(
-        address funder,
-        uint dealId
-    ) internal {
+    function fundDealForTest(address funder, uint dealId) internal {
         vm.startPrank(funder);
         verifier.fundDeal(dealId);
         vm.stopPrank();
@@ -81,7 +78,7 @@ contract VerifierTest is StdCheats, Test {
         token.approve(address(escrow), amount);
         vm.stopPrank();
     }
-        
+
     // Helper function to get deal details for deal y
     function getDealDetails(
         uint dealIndex
@@ -124,13 +121,36 @@ contract VerifierTest is StdCheats, Test {
         uint256 counterparty_token_amount
     ) internal {
         assertEq(deal.party, party, "incorrect party address");
-        assertEq(deal.counterparty, counterparty, "incorrect counterparty address");
-        assertEq(deal.party_token, party_token, "incorrect party token address");
-        assertEq(deal.party_token_amount, party_token_amount, "incorrect party token amount");
-        assertEq(deal.counterparty_token, counterparty_token, "incorrect counterparty token address");
-        assertEq(deal.counterparty_token_amount, counterparty_token_amount, "incorrect counterparty token amount");
+        assertEq(
+            deal.counterparty,
+            counterparty,
+            "incorrect counterparty address"
+        );
+        assertEq(
+            deal.party_token,
+            party_token,
+            "incorrect party token address"
+        );
+        assertEq(
+            deal.party_token_amount,
+            party_token_amount,
+            "incorrect party token amount"
+        );
+        assertEq(
+            deal.counterparty_token,
+            counterparty_token,
+            "incorrect counterparty token address"
+        );
+        assertEq(
+            deal.counterparty_token_amount,
+            counterparty_token_amount,
+            "incorrect counterparty token amount"
+        );
         assertFalse(deal.party_funded, "incorrect party funded status");
-        assertFalse(deal.counterparty_funded, "incorrect counterparty funded status");
+        assertFalse(
+            deal.counterparty_funded,
+            "incorrect counterparty funded status"
+        );
         assertFalse(deal.deal_canceled, "incorrect deal canceled status");
         assertFalse(deal.deal_executed, "incorrect deal executed status");
     }
@@ -162,7 +182,6 @@ contract VerifierTest is StdCheats, Test {
 
     // TEST USER 0 CREATES A DEAL
     function testDevAccount0CanCreateDeal0() public {
-        
         // Arrange - create the deal for the test
         createDealForTest(
             DEV_ACCOUNT_0,
@@ -172,7 +191,7 @@ contract VerifierTest is StdCheats, Test {
             address(mockUni),
             TOKEN_TRANSFER_AMOUNT
         );
-        
+
         // Get the deal details from the verifier contract
         Verifier.Deal memory deal = getDealDetails(0);
 
@@ -211,7 +230,7 @@ contract VerifierTest is StdCheats, Test {
             address(mockLink),
             TOKEN_TRANSFER_AMOUNT
         );
-        
+
         // Get the deal(1) details from the verifier contract
         Verifier.Deal memory deal = getDealDetails(1);
 
@@ -229,20 +248,18 @@ contract VerifierTest is StdCheats, Test {
 
     // fundDeal() TESTS - move most of these to integration tests
     // need to test:
-        // that party can fund if escrow verified
-        // that party cannot fund if escrow not verified
-        // that party cannot fund when party_funded = true
-        // that counterparty cannot fund when party_funded = true  
+    // that party can fund if escrow verified
+    // that party cannot fund if escrow not verified
+    // that party cannot fund when party_funded = true
+    // that counterparty cannot fund when party_funded = true
 
-        // that counterparty can fund if verified
-        // that counterparty cannot fund if not verified
-        // that counterparty cannot fund when counterparty_funded = true
-        // that party cannot fund when counterparty_funded = true
-
+    // that counterparty can fund if verified
+    // that counterparty cannot fund if not verified
+    // that counterparty cannot fund when counterparty_funded = true
+    // that party cannot fund when counterparty_funded = true
 
     // TEST USER 0 CAN FUND A DEAL
     function testUser0CanFundDeal0WhenVerified() public {
-        
         // User 0 creates deal 0
         createDealForTest(
             DEV_ACCOUNT_0,
@@ -254,8 +271,12 @@ contract VerifierTest is StdCheats, Test {
         );
 
         // User 0 approves the transfer of tokens to the escrow contract
-        approveTokenTransferForDeal(address(mockLink), DEV_ACCOUNT_0, TOKEN_TRANSFER_AMOUNT);
-        
+        approveTokenTransferForDeal(
+            address(mockLink),
+            DEV_ACCOUNT_0,
+            TOKEN_TRANSFER_AMOUNT
+        );
+
         // User 0 funds deal 0
         fundDealForTest(DEV_ACCOUNT_0, 0);
 
@@ -315,22 +336,26 @@ contract VerifierTest is StdCheats, Test {
             TOKEN_MINT_BALANCE - TOKEN_TRANSFER_AMOUNT,
             "incorrect user balance"
         );
-        
+
         // check status of deal using helper function
         Verifier.Deal memory deal = getDealDetails(0);
-      
-        assertTrue(deal.counterparty_funded, "Deal not marked as funded by the counterparty");
-        assertFalse(deal.party_funded, "Deal incorrectly marked as funded by the party");
+
+        assertTrue(
+            deal.counterparty_funded,
+            "Deal not marked as funded by the counterparty"
+        );
+        assertFalse(
+            deal.party_funded,
+            "Deal incorrectly marked as funded by the party"
+        );
         assertFalse(deal.deal_canceled, "Deal incorrectly marked as canceled");
         assertFalse(deal.deal_executed, "Deal incorrectly marked as executed");
-
-        
     }
 
     // partyVerifiesAndExecutes()
 
     // TEST USER 0 CAN VERIFY AND EXECUTE A DEAL
-    
+
     // TODO: FUNCTIONS TO TEST
     // counterpartyVerifiesAndExecutes()
     // executeSwap()
