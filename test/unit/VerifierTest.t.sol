@@ -18,8 +18,8 @@ contract VerifierTest is StdCheats, Test {
     MockUniToken public mockUni;
 
     // CONSTANTS
-    uint256 public constant TOKEN_MINT_BALANCE = 100 * 10**18;
-    uint256 public constant TOKEN_TRANSFER_AMOUNT = 10 * 10**18;
+    uint256 public constant TOKEN_MINT_BALANCE = 100 * 10 ** 18;
+    uint256 public constant TOKEN_TRANSFER_AMOUNT = 10 * 10 ** 18;
     address public constant DEV_ACCOUNT_0 =
         0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
     address public constant DEV_ACCOUNT_1 =
