@@ -305,4 +305,42 @@ contract Verifier {
     function viewEscrowAddress() public view returns (address) {
         return address(escrow);
     }
+
+    // ----- EXTERNAL READ FUNCTIONS ----- //
+
+    // Reads the details of a deal
+    function readDeal(
+        uint dealId
+    )
+        external
+        view
+        returns (
+            address, // party
+            address, // counterparty
+            address, // party_token
+            uint, // party_token_amount
+            address, // counterparty_token
+            uint, // counterparty_token_amount
+            bool, // party_funded
+            bool, // counterparty_funded
+            bool, // deal_canceled
+            bool // deal_executed
+        )
+    {
+        require(dealId < deals.length, "Deal does not exist");
+
+        Deal storage deal = deals[dealId];
+        return (
+            deal.party,
+            deal.counterparty,
+            deal.party_token,
+            deal.party_token_amount,
+            deal.counterparty_token,
+            deal.counterparty_token_amount,
+            deal.party_funded,
+            deal.counterparty_funded,
+            deal.deal_canceled,
+            deal.deal_executed
+        );
+    }
 }
