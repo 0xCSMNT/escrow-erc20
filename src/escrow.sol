@@ -8,15 +8,24 @@ import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.so
 // import {IERC20 } from "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.4.0/contracts/token/ERC20/IERC20.sol";
 
 contract Escrow {
-
     // State variables
     address public admin;
     address public verifier;
 
     // Events
-    event Deposit(uint indexed dealId, address indexed funder, address indexed tokenAddress, uint tokenAmount);
-    event Withdrawal(uint indexed dealId, address indexed withdrawer, address indexed tokenAddress, uint tokenAmount);
-    
+    event Deposit(
+        uint indexed dealId,
+        address indexed funder,
+        address indexed tokenAddress,
+        uint tokenAmount
+    );
+    event Withdrawal(
+        uint indexed dealId,
+        address indexed withdrawer,
+        address indexed tokenAddress,
+        uint tokenAmount
+    );
+
     // Modifiers
     modifier onlyVerifier() {
         require(msg.sender == verifier, "Only Verifier can call this");
@@ -40,14 +49,27 @@ contract Escrow {
     }
 
     // Deposit function
-    function deposit(uint dealId, address funder, address tokenAddress, uint tokenAmount) external {
+    function deposit(
+        uint dealId,
+        address funder,
+        address tokenAddress,
+        uint tokenAmount
+    ) external {
         IERC20 token = IERC20(tokenAddress);
-        require(token.transferFrom(funder, address(this), tokenAmount), "transferFrom failed");
+        require(
+            token.transferFrom(funder, address(this), tokenAmount),
+            "transferFrom failed"
+        );
         emit Deposit(dealId, funder, tokenAddress, tokenAmount);
     }
 
     // Withdraw function
-    function withdraw(uint dealId, address withdrawer, address tokenAddress, uint256 tokenAmount) external onlyVerifier {
+    function withdraw(
+        uint dealId,
+        address withdrawer,
+        address tokenAddress,
+        uint256 tokenAmount
+    ) external onlyVerifier {
         IERC20 token = IERC20(tokenAddress);
         require(token.transfer(withdrawer, tokenAmount), "transfer failed");
         emit Withdrawal(dealId, withdrawer, tokenAddress, tokenAmount);
@@ -58,4 +80,3 @@ contract Escrow {
         return verifier;
     }
 }
-
